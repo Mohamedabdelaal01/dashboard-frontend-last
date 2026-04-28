@@ -1,5 +1,4 @@
 import { Award, Flame, Trophy, Zap, Lock } from 'lucide-react';
-import { SALES_REPS } from '../utils/assignments';
 
 const BadgeCard = ({ badge, earned }) => (
   <div

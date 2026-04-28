@@ -5,9 +5,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { formatLeadClass, getLeadBadgeClass, formatBranch } from '../services/api';
 import generateLeadExplanation from '../utils/leadExplanation';
-import { SALES_REPS } from '../utils/assignments';
 import { enrichLead } from '../utils/leadIntelligence';
 import useAssignments from '../hooks/useAssignments';
+import useRepList from '../hooks/useRepList';
 import BehaviorBadge from './BehaviorBadge';
 import SendFlowButton from './SendFlowButton';
 
@@ -75,6 +75,7 @@ const InfoButton = ({ explanation }) => {
 
 // ── Sales rep dropdown ───────────────────────────────
 const AssigneeSelect = ({ userId, assignee, onChange }) => {
+  const { reps } = useRepList();
   return (
     <select
       value={assignee || ''}
@@ -90,7 +91,7 @@ const AssigneeSelect = ({ userId, assignee, onChange }) => {
       }`}
     >
       <option value="">بدون</option>
-      {SALES_REPS.map((r) => (
+      {reps.map((r) => (
         <option key={r} value={r}>
           {r}
         </option>

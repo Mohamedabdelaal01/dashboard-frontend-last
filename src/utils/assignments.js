@@ -3,7 +3,9 @@
 
 const STORAGE_KEY = 'lead_assignments';
 
-export const SALES_REPS = ['أحمد', 'محمد', 'سارة', 'مروة'];
+// SALES_REPS was removed — rep list now comes from the DB via useRepList hook.
+// Kept as empty array for any legacy import that hasn't been updated yet.
+export const SALES_REPS = [];
 
 /**
  * يرجع object بكل التعيينات: { user_id: rep_name }

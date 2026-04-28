@@ -1,30 +1,31 @@
+/**
+ * useCurrentRep — tracks which rep the admin is currently viewing.
+ * Value is persisted to localStorage. Any valid string is accepted —
+ * the list of valid names comes from the DB (useRepList), not hardcoded.
+ */
 import { useEffect, useState, useCallback } from 'react';
-import { SALES_REPS } from '../utils/assignments';
 
 const STORAGE_KEY = 'current_rep';
-const EVENT = 'current_rep_changed';
+const EVENT       = 'current_rep_changed';
 
-/**
- * useCurrentRep — المندوب الحالي الشغال على النظام
- * default = أول واحد في SALES_REPS
- */
 export default function useCurrentRep() {
   const [rep, setRep] = useState(() => {
-    if (typeof window === 'undefined') return SALES_REPS[0];
+    if (typeof window === 'undefined') return '';
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored && SALES_REPS.includes(stored)) return stored;
-    } catch (_) {}
-    return SALES_REPS[0];
+      return window.localStorage.getItem(STORAGE_KEY) || '';
+    } catch (_) {
+      return '';
+    }
   });
 
   useEffect(() => {
     const sync = (e) => {
-      if (e?.detail) setRep(e.detail);
-      else {
+      if (e?.detail !== undefined) {
+        setRep(e.detail);
+      } else {
         try {
           const v = window.localStorage.getItem(STORAGE_KEY);
-          if (v) setRep(v);
+          setRep(v || '');
         } catch (_) {}
       }
     };
@@ -37,12 +38,11 @@ export default function useCurrentRep() {
   }, []);
 
   const changeRep = useCallback((newRep) => {
-    if (!SALES_REPS.includes(newRep)) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, newRep);
-      window.dispatchEvent(new CustomEvent(EVENT, { detail: newRep }));
+      window.localStorage.setItem(STORAGE_KEY, newRep || '');
+      window.dispatchEvent(new CustomEvent(EVENT, { detail: newRep || '' }));
     } catch (_) {}
-    setRep(newRep);
+    setRep(newRep || '');
   }, []);
 
   return [rep, changeRep];

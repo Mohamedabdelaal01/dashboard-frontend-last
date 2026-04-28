@@ -1,7 +1,14 @@
 import { UserCircle } from 'lucide-react';
-import { SALES_REPS } from '../utils/assignments';
+import useRepList from '../hooks/useRepList';
 
 const RepSelector = ({ currentRep, onChange, compact = false }) => {
+  const { reps, loading } = useRepList();
+
+  // Auto-select the first rep if nothing is selected yet and reps are loaded
+  if (!loading && reps.length > 0 && !currentRep) {
+    onChange(reps[0]);
+  }
+
   return (
     <div
       className={`flex items-center gap-2 ${
@@ -14,17 +21,24 @@ const RepSelector = ({ currentRep, onChange, compact = false }) => {
           المندوب:
         </span>
       )}
-      <select
-        value={currentRep}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-white text-xs font-black outline-none cursor-pointer"
-      >
-        {SALES_REPS.map((r) => (
-          <option key={r} value={r} className="bg-dark-900">
-            {r}
-          </option>
-        ))}
-      </select>
+
+      {loading ? (
+        <span className="text-dark-500 text-xs animate-pulse">جاري التحميل…</span>
+      ) : reps.length === 0 ? (
+        <span className="text-dark-500 text-xs">لا يوجد مندوبون</span>
+      ) : (
+        <select
+          value={currentRep || reps[0]}
+          onChange={(e) => onChange(e.target.value)}
+          className="bg-transparent text-white text-xs font-black outline-none cursor-pointer"
+        >
+          {reps.map((r) => (
+            <option key={r} value={r} className="bg-dark-900">
+              {r}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 };

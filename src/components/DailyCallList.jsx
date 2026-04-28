@@ -3,23 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { Printer, Check, Phone, UserCheck, Users } from 'lucide-react';
 import { formatBranch, formatLeadClass, getLeadBadgeClass } from '../services/api';
 import { buildRankedQueue } from '../utils/leadIntelligence';
-import { SALES_REPS } from '../utils/assignments';
 import generateLeadExplanation from '../utils/leadExplanation';
 import BehaviorBadge from './BehaviorBadge';
 import useAssignments from '../hooks/useAssignments';
 import useCalledToday from '../hooks/useCalledToday';
+import useRepList from '../hooks/useRepList';
 
 const DailyCallList = ({ leads, currentRep, onStartSession }) => {
   const navigate = useNavigate();
   const [assignments] = useAssignments();
   const { isCalled, toggleCalled } = useCalledToday();
+  const { reps } = useRepList();
 
   const enrichedQueue = useMemo(() => buildRankedQueue(leads || [], 30), [leads]);
 
   // Group by assignee
   const groupedByRep = useMemo(() => {
     const map = {};
-    SALES_REPS.forEach((r) => (map[r] = []));
+    reps.forEach((r) => (map[r] = []));
     map.__unassigned__ = [];
     enrichedQueue.forEach((lead) => {
       const rep = assignments[lead.user_id];
@@ -193,7 +194,7 @@ const DailyCallList = ({ leads, currentRep, onStartSession }) => {
       </div>
 
       {/* ── By rep groups ─────────────────────────────── */}
-      {SALES_REPS.map((rep) => {
+      {reps.map((rep) => {
         const list = groupedByRep[rep] || [];
         if (list.length === 0) return null;
         const isCurrentRep = rep === currentRep;

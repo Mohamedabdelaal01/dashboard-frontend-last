@@ -231,6 +231,12 @@ export const fetchUsers = async () => {
   return response.data;
 };
 
+/** fetchReps — returns string[] of sales rep names. Accessible to all auth users. */
+export const fetchReps = async () => {
+  const response = await api.get('/api/reps');
+  return response.data.reps; // string[]
+};
+
 export const createUser = async (data) => {
   const response = await api.post('/api/users', data);
   return response.data;

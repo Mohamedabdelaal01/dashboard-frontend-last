@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState, useCallback } from 'react';
-import { SALES_REPS } from '../utils/assignments';
+import useRepList from './useRepList';
 
 // ── XP storage (per rep, daily) ─────────────────────────────────────────────
 const XP_PREFIX = 'xp_log_';         // xp_log_{rep} → array of {date, xp}
@@ -142,6 +142,7 @@ export function computeLevel(totalXp) {
  */
 export default function useGamification(currentRep, todayLog = []) {
   const [tick, setTick] = useState(0);
+  const { reps } = useRepList();
 
   useEffect(() => {
     const sync = () => setTick((t) => t + 1);
@@ -202,7 +203,7 @@ export default function useGamification(currentRep, todayLog = []) {
   const leaderboard = useMemo(() => {
     // tick هنا عشان نـ re-calculate لو حد تاني عدّل
     void tick;
-    return SALES_REPS.map((r) => {
+    return reps.map((r) => {
       const xpLog = readXpLog(r);
       const totalXp = xpLog.reduce((s, e) => s + (e.xp || 0), 0);
       const today = todayStr();
