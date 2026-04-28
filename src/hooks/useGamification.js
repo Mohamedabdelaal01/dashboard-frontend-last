@@ -218,7 +218,7 @@ export default function useGamification(currentRep, todayLog = []) {
         level: computeLevel(totalXp).level,
       };
     }).sort((a, b) => b.totalXp - a.totalXp);
-  }, [tick, currentRep, todayLog]);
+  }, [tick, currentRep, todayLog, reps]);
 
   const reset = useCallback(() => {
     if (typeof window === 'undefined') return;

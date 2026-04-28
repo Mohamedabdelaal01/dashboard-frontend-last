@@ -1,13 +1,16 @@
+import { useEffect } from 'react';
 import { UserCircle } from 'lucide-react';
 import useRepList from '../hooks/useRepList';
 
 const RepSelector = ({ currentRep, onChange, compact = false }) => {
   const { reps, loading } = useRepList();
 
-  // Auto-select the first rep if nothing is selected yet and reps are loaded
-  if (!loading && reps.length > 0 && !currentRep) {
-    onChange(reps[0]);
-  }
+  // Auto-select the first rep once the list loads and nothing is selected yet
+  useEffect(() => {
+    if (!loading && reps.length > 0 && !currentRep) {
+      onChange(reps[0]);
+    }
+  }, [loading, reps, currentRep, onChange]);
 
   return (
     <div
