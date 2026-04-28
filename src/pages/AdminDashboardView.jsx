@@ -34,6 +34,7 @@ import { useAlerts }         from '../contexts/AlertsContext';
 import { useAuth }           from '../contexts/AuthContext';
 import useAssignments        from '../hooks/useAssignments';
 import useCurrentRep         from '../hooks/useCurrentRep';
+import useRepList            from '../hooks/useRepList';
 import useCallSession        from '../hooks/useCallSession';
 import useGamification       from '../hooks/useGamification';
 
@@ -100,6 +101,15 @@ const AdminDashboardView = () => {
 
   // ── Rep management ────────────────────────────────────────────────────────
   const [currentRep, setCurrentRep] = useCurrentRep();
+  const { reps }       = useRepList();
+
+  // Clear stale localStorage value if the stored rep no longer exists in the DB
+  useEffect(() => {
+    if (reps.length > 0 && currentRep && !reps.includes(currentRep)) {
+      setCurrentRep('');
+    }
+  }, [reps, currentRep, setCurrentRep]);
+
   // Admin always acts under their own name — currentRep is only for VIEWING
   const effectiveRep = user?.name || currentRep;
   const viewingRep   = currentRep;            // the rep whose data is displayed

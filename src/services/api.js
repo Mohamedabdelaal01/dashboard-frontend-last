@@ -154,15 +154,37 @@ export const getLeadBadgeClass = (leadClass) => {
   return map[leadClass] || 'badge-cold';
 };
 
+// ── Branch cache (populated once from /api/branches) ─────────────────────────
+const _BRANCH_FALLBACK = {
+  nasr_city:  'نصر سيتي',
+  maadi:      'المعادي',
+  new_cairo:  'القاهرة الجديدة',
+  october:    'أكتوبر',
+  alexandria: 'الإسكندرية',
+  helwan:     'حلوان',
+  faisal:     'فيصل',
+  ain_shams:  'عين شمس',
+};
+let _branchCache = null; // {id → name} after first load
+
+export const fetchBranches = async () => {
+  const res = await api.get('/api/branches');
+  const list = res.data.branches || [];
+  _branchCache = Object.fromEntries(list.map(b => [b.id, b.name]));
+  return list; // [{id, name}]
+};
+
+export const updateBranches = async (branches) => {
+  const res = await api.put('/api/branches', { branches });
+  const list = res.data.branches || [];
+  _branchCache = Object.fromEntries(list.map(b => [b.id, b.name]));
+  return list;
+};
+
 export const formatBranch = (branch) => {
-  const map = {
-    nasr_city: 'نصر سيتي',
-    maadi: 'المعادي',
-    helwan: 'حلوان',
-    faisal: 'فيصل',
-    ain_shams: 'عين شمس',
-  };
-  return map[branch] || branch;
+  if (!branch) return '';
+  if (_branchCache && _branchCache[branch] !== undefined) return _branchCache[branch];
+  return _BRANCH_FALLBACK[branch] || branch;
 };
 
 // ✅ FIX: added missing map_click

@@ -2,18 +2,20 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {
   Settings2, Users, Key, Building2, Eye, EyeOff,
-  Save, Plus, Edit2, Check, AlertTriangle, X,
+  Save, Plus, Edit2, Check, AlertTriangle, X, Trash2,
 } from 'lucide-react';
 import {
   fetchSettings, updateSetting,
   fetchUsers, createUser, updateUser,
+  fetchBranches, updateBranches,
 } from '../services/api';
 
 // ── Tabs ────────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'general',  label: 'الإعدادات العامة', icon: Settings2 },
-  { id: 'api',      label: 'مفاتيح API',        icon: Key       },
-  { id: 'users',    label: 'المستخدمون',        icon: Users     },
+  { id: 'general',  label: 'الإعدادات العامة', icon: Settings2  },
+  { id: 'api',      label: 'مفاتيح API',        icon: Key        },
+  { id: 'users',    label: 'المستخدمون',        icon: Users      },
+  { id: 'branches', label: 'الفروع',            icon: Building2  },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -422,6 +424,238 @@ function UserModal({ mode, user, onSave, onClose }) {
   );
 }
 
+// ── Branches tab ─────────────────────────────────────────────────────────────
+function BranchesTab() {
+  const [branches, setBranches] = useState([]);   // [{id, name}]
+  const [loading,  setLoading]  = useState(true);
+  const [saving,   setSaving]   = useState(false);
+  const [editIdx,  setEditIdx]  = useState(null); // index being edited, or null
+  const [editBuf,  setEditBuf]  = useState({ id: '', name: '' });
+  const [addMode,  setAddMode]  = useState(false);
+  const [newBranch, setNewBranch] = useState({ id: '', name: '' });
+
+  // ── Load ───────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetchBranches()
+      .then(setBranches)
+      .catch(() => setBranches([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ── Save full list to DB ───────────────────────────────────────────────────
+  const persist = async (list) => {
+    setSaving(true);
+    const tId = toast.loading('جاري الحفظ...');
+    try {
+      const saved = await updateBranches(list);
+      setBranches(saved);
+      toast.success('تم حفظ الفروع بنجاح', { id: tId });
+    } catch {
+      toast.error('فشل الحفظ', { id: tId });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  const handleDelete = (idx) => {
+    const updated = branches.filter((_, i) => i !== idx);
+    persist(updated);
+  };
+
+  // ── Start edit ─────────────────────────────────────────────────────────────
+  const startEdit = (idx) => {
+    setEditIdx(idx);
+    setEditBuf({ ...branches[idx] });
+  };
+
+  // ── Confirm edit ───────────────────────────────────────────────────────────
+  const confirmEdit = () => {
+    if (!editBuf.id.trim() || !editBuf.name.trim()) return;
+    const updated = branches.map((b, i) =>
+      i === editIdx ? { id: editBuf.id.trim(), name: editBuf.name.trim() } : b
+    );
+    setEditIdx(null);
+    persist(updated);
+  };
+
+  // ── Add new branch ─────────────────────────────────────────────────────────
+  const handleAdd = () => {
+    const id   = newBranch.id.trim().replace(/\s+/g, '_').toLowerCase();
+    const name = newBranch.name.trim();
+    if (!id || !name) {
+      toast.error('أدخل معرّف واسم الفرع');
+      return;
+    }
+    if (branches.some(b => b.id === id)) {
+      toast.error('المعرّف موجود بالفعل');
+      return;
+    }
+    const updated = [...branches, { id, name }];
+    setAddMode(false);
+    setNewBranch({ id: '', name: '' });
+    persist(updated);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="w-7 h-7 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5 max-w-xl">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-white font-black text-sm">{branches.length} فرع مُعرَّف</p>
+          <p className="text-dark-500 text-xs mt-0.5">
+            الفروع تظهر في خيارات العملاء وفلاتر التحليلات
+          </p>
+        </div>
+        <button
+          onClick={() => { setAddMode(true); setNewBranch({ id: '', name: '' }); }}
+          className="btn-primary"
+          disabled={saving}
+        >
+          <Plus className="w-4 h-4" />
+          إضافة فرع
+        </button>
+      </div>
+
+      {/* Add form */}
+      {addMode && (
+        <div className="card p-5 border-primary-500/30 bg-primary-500/5 space-y-4">
+          <p className="text-primary-300 font-black text-sm">فرع جديد</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="المعرّف (بالإنجليزية)" hint="مثال: heliopolis">
+              <input
+                value={newBranch.id}
+                onChange={e => setNewBranch(p => ({ ...p, id: e.target.value }))}
+                placeholder="branch_id"
+                dir="ltr"
+                className="input-field w-full font-mono text-sm"
+              />
+            </Field>
+            <Field label="الاسم العربي" hint="مثال: مصر الجديدة">
+              <input
+                value={newBranch.name}
+                onChange={e => setNewBranch(p => ({ ...p, name: e.target.value }))}
+                placeholder="اسم الفرع"
+                className="input-field w-full"
+              />
+            </Field>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={handleAdd} className="btn-primary" disabled={saving}>
+              <Plus className="w-4 h-4" /> حفظ
+            </button>
+            <button onClick={() => setAddMode(false)} className="btn-secondary">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Branches list */}
+      {branches.length === 0 ? (
+        <div className="card p-10 text-center">
+          <Building2 className="w-10 h-10 text-dark-600 mx-auto mb-3" />
+          <p className="text-dark-400 text-sm">لا توجد فروع — أضف أول فرع</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {branches.map((branch, idx) => (
+            <div
+              key={branch.id}
+              className="card p-4 flex items-center gap-4"
+            >
+              {editIdx === idx ? (
+                // ── Edit row ──────────────────────────────────────────────
+                <>
+                  <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <p className="text-dark-500 text-[10px] font-bold uppercase">المعرّف</p>
+                      <input
+                        value={editBuf.id}
+                        onChange={e => setEditBuf(p => ({ ...p, id: e.target.value }))}
+                        dir="ltr"
+                        className="input-field w-full font-mono text-sm py-1.5"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-dark-500 text-[10px] font-bold uppercase">الاسم</p>
+                      <input
+                        value={editBuf.name}
+                        onChange={e => setEditBuf(p => ({ ...p, name: e.target.value }))}
+                        className="input-field w-full py-1.5"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={confirmEdit}
+                      disabled={saving}
+                      className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                      title="حفظ"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditIdx(null)}
+                      className="p-2 rounded-lg bg-dark-700 text-dark-400 hover:text-white transition-colors"
+                      title="إلغاء"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // ── View row ──────────────────────────────────────────────
+                <>
+                  <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-primary-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-sm">{branch.name}</p>
+                    <p className="text-dark-500 text-[11px] font-mono">{branch.id}</p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => startEdit(idx)}
+                      className="p-2 rounded-lg text-dark-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                      title="تعديل"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(idx)}
+                      disabled={saving}
+                      className="p-2 rounded-lg text-dark-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      title="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {saving && (
+        <p className="text-primary-400 text-xs text-center animate-pulse">
+          جاري الحفظ…
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── Field wrapper ────────────────────────────────────────────────────────────
 function Field({ label, hint, children }) {
   return (
@@ -501,9 +735,10 @@ export default function Settings() {
 
       {/* Tab content */}
       <div>
-        {activeTab === 'general' && <GeneralTab settings={settings} onSave={handleSave} />}
-        {activeTab === 'api'     && <ApiTab     settings={settings} onSave={handleSave} />}
-        {activeTab === 'users'   && <UsersTab />}
+        {activeTab === 'general'  && <GeneralTab  settings={settings} onSave={handleSave} />}
+        {activeTab === 'api'      && <ApiTab      settings={settings} onSave={handleSave} />}
+        {activeTab === 'users'    && <UsersTab />}
+        {activeTab === 'branches' && <BranchesTab />}
       </div>
     </div>
   );
