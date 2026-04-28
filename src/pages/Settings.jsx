@@ -95,27 +95,63 @@ function GeneralTab({ settings, onSave }) {
 
 // ── API Keys tab ─────────────────────────────────────────────────────────────
 function ApiTab({ settings, onSave }) {
-  const fields = [
-    { key: 'manychat_api_key',   label: 'ManyChat API Key',   hint: 'من ManyChat → Settings → API' },
-    { key: 'manychat_page_id',   label: 'ManyChat Page ID',   hint: 'معرّف صفحة الفيسبوك في ManyChat' },
-    { key: 'manychat_visit_flow',    label: 'Visit Flow ID',      hint: 'كود الفلو المُرسل عند تأكيد الزيارة' },
-    { key: 'manychat_purchase_flow', label: 'Purchase Flow ID',   hint: 'كود الفلو المُرسل عند تسجيل مبيعات' },
-    { key: 'manychat_reminder_flow', label: 'Reminder Flow ID',   hint: 'كود الفلو المُرسل لتذكير العملاء بالموقع' },
-    { key: 'facebook_pixel_id',  label: 'Facebook Pixel ID',  hint: 'لتتبع تحويلات الإعلانات' },
-    { key: 'openai_api_key',     label: 'OpenAI API Key',     hint: 'للميزات المستقبلية بالذكاء الاصطناعي' },
+  const sections = [
+    {
+      title: 'مفاتيح ManyChat',
+      fields: [
+        { key: 'manychat_api_key', label: 'ManyChat API Key', hint: 'من ManyChat → Settings → API → Access Token' },
+        { key: 'manychat_page_id', label: 'ManyChat Page ID', hint: 'معرّف صفحة الفيسبوك في ManyChat' },
+      ],
+    },
+    {
+      title: 'Flows — أحداث تلقائية',
+      hint: 'بتتبعت تلقائياً عند حدث معيّن (زيارة / شراء / تذكير)',
+      fields: [
+        { key: 'manychat_visit_flow',    label: 'Visit Confirmed Flow',  hint: 'يُرسل عند تأكيد وصول العميل للمعرض' },
+        { key: 'manychat_purchase_flow', label: 'Purchase Flow',         hint: 'يُرسل عند تسجيل عملية شراء' },
+        { key: 'manychat_reminder_flow', label: 'Location Reminder Flow', hint: 'يُرسل للعملاء الذين طلبوا الموقع ولم يزوروا' },
+      ],
+    },
+    {
+      title: 'Flows — الذكاء الاصطناعي (Trigger Engine)',
+      hint: 'بتتبعت لما المندوب يضغط "إرسال" على عميل — يختار النظام المناسب تلقائياً',
+      fields: [
+        { key: 'manychat_flow_immediate',   label: 'Hot Lead — Immediate Flow',  hint: 'للعملاء الساخنين النشطين في آخر 6 ساعات' },
+        { key: 'manychat_flow_branch_info', label: 'Branch Info Flow',           hint: 'للعملاء اللي طلبوا موقع الفرع أو زاروا' },
+        { key: 'manychat_flow_offer',       label: 'Product Offer Flow',         hint: 'للعملاء اللي شافوا تفاصيل منتج مؤخراً' },
+        { key: 'manychat_flow_reengage',    label: 'Re-Engagement Flow',         hint: 'للعملاء الدافئين/الساخنين الغايبين +3 أيام' },
+      ],
+    },
+    {
+      title: 'مفاتيح أخرى',
+      fields: [
+        { key: 'facebook_pixel_id', label: 'Facebook Pixel ID', hint: 'لتتبع تحويلات الإعلانات' },
+        { key: 'openai_api_key',    label: 'OpenAI API Key',    hint: 'للميزات المستقبلية بالذكاء الاصطناعي' },
+      ],
+    },
   ];
 
   return (
-    <div className="space-y-5 max-w-xl">
-      {fields.map(f => (
-        <ApiKeyField
-          key={f.key}
-          fieldKey={f.key}
-          label={f.label}
-          hint={f.hint}
-          initialValue={settings[f.key] || ''}
-          onSave={onSave}
-        />
+    <div className="space-y-8 max-w-xl">
+      {sections.map(section => (
+        <div key={section.title} className="space-y-4">
+          <div>
+            <h3 className="text-white font-black text-sm">{section.title}</h3>
+            {section.hint && <p className="text-dark-500 text-xs mt-0.5">{section.hint}</p>}
+          </div>
+          <div className="space-y-3">
+            {section.fields.map(f => (
+              <ApiKeyField
+                key={f.key}
+                fieldKey={f.key}
+                label={f.label}
+                hint={f.hint}
+                initialValue={settings[f.key] || ''}
+                onSave={onSave}
+              />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
